@@ -45,6 +45,10 @@ const monthNames = [
     'December',
 ];
 
+/**
+ * @param {number} year
+ * @returns {boolean}
+ */
 function isLeapYear (year) {
     return !(year % 4 !== 0 || year % 100 === 0 && year % 400 !== 0)
 }
@@ -59,8 +63,9 @@ function createTemplate (string) {
 }
 
 // Models
-let year = 2018;
-let month = months.jul;
+const today = new Date();
+let year = today.getFullYear();
+let month = today.getMonth();
 
 // Fix leap year
 isLeapYear(year) && (daysInMonths[1] = 29);
