@@ -47,12 +47,16 @@ class Calendar {
             'November',
             'December',
         ];
+
         this.today = new Date();
+
         this.year = this.today.getFullYear();
         this.month = this.today.getMonth();
+        this.day = this.today.getDay();
 
         this.daysInMonths = this.getDaysInMonths();
         this.daysInMonth = this.daysInMonths[this.month];
+
         this.days = [];
         for (let i = 1; i <= this.daysInMonth; i++) {
             const date = new Date(this.year, this.month, i);
@@ -62,6 +66,7 @@ class Calendar {
                 text: `${i}`,
                 day: day,
                 isHoliday: day === 6 || day === 0,
+                // isToday: day === this.day
             });
         }
 
