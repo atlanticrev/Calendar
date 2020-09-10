@@ -66,9 +66,15 @@ class Calendar {
                 text: `${i}`,
                 day: day,
                 isHoliday: day === 6 || day === 0,
-                // isToday: day === this.day
+                isToday: this.isToday(date)
             });
         }
+
+        this.state = {
+            status: "selecting",
+            rangeStartEl: null,
+            rangeStopEl: null,
+        };
 
         this.container = this.createDomEl(`
             <div class="container">
@@ -94,8 +100,24 @@ class Calendar {
         this.yearEl = this.container.querySelector('.year');
         this.daysEl = this.container.querySelector('.days');
 
+        this.onDayClick = this.onDayClick.bind(this);
+
+        this.daysEl.addEventListener('click', this.onDayClick);
+
         this.render();
         this.append();
+    }
+
+    onDayClick (e) {
+        let dayEl;
+        for (let el of e.composedPath()) {
+            if (el.classList && el.classList.contains('day')) {
+                dayEl = el;
+            }
+        }
+        this.state.rangeStartEl && this.state.rangeStartEl.classList.remove('in-range');
+        this.state.rangeStartEl = dayEl;
+        this.state.rangeStartEl.classList.add('in-range');
     }
 
     render () {
@@ -109,7 +131,9 @@ class Calendar {
                     this.daysEl.appendChild(this.createDomEl(`<div class="day inactive"></div>`));
                 }
             }
-            this.daysEl.appendChild(this.createDomEl(`<div class="day active ${day.isHoliday ? 'holiday' : ''}">${day.text}</div>`));
+            this.daysEl.appendChild(this.createDomEl(`
+                <div class="day active ${day.isHoliday ? 'holiday' : ''} ${day.isToday ? 'today' : ''}" data-index="${day.index}">${day.text}</div>
+            `));
         }
     }
 
@@ -137,6 +161,16 @@ class Calendar {
      */
     isLeapYear (year) {
         return !(year % 4 !== 0 || year % 100 === 0 && year % 400 !== 0)
+    }
+
+    /**
+     * @param {Date} date
+     * @return {boolean}
+     */
+    isToday (date) {
+        return !!(this.today.getFullYear() === date.getFullYear()
+            && this.today.getMonth() === date.getMonth()
+            && this.today.getDate() === date.getDate());
     }
 
 }

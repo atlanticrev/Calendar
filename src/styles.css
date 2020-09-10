@@ -89,24 +89,24 @@ color: white;
 .days {
 display: flex;
 flex-flow: row wrap;
-width: 100%;
+width: 370px ;
+    height: 370px;
 }
 
 .day {
---size: calc(100% * 1/7);
+--size: calc(100% / 7);
+    --width: var(--size);
+    --height: var(--size);
 
 display: flex;
 flex-direction: column;
 justify-content: center;
 align-items: center;
-width: var(--size);
-height: 70px;
-font-size: 15px;
+width: var(--width);
+height: var(--height);
+font-size: 20px;
 text-transform: uppercase;
 color: white;
-font-weight: bold;
-
-cursor: pointer;
 }
 
 @media not all and (hover: none) {
@@ -116,10 +116,30 @@ cursor: pointer;
     }
 }
 
+.day.active {
+    cursor: pointer;
+}
+
 .day.holiday {
 color: #f1b2d7;
 }
 
-.day.current {
-    border: 1px solid lawngreen;
+.day.today {
+    border: 1px dashed #f1b2d7;
+}
+
+.day.in-range {
+    background-color: rgba(0, 0, 0, .4);
+}
+
+.day.range-end {
+    border-bottom-right-radius: 50%;
+    border-top-right-radius: 50%;
+    background-color: rgba(0, 0, 0, .4);
+}
+
+.day.range-start {
+    border-bottom-left-radius: 50%;
+    border-top-left-radius: 50%;
+    background-color: rgba(0, 0, 0, .4);
 }
