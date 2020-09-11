@@ -52,38 +52,30 @@ class Calendar {
     constructor () {
         this.today = new Date();
 
-        this.year = this.today.getFullYear();
-        this.month = this.today.getMonth();
-        this.day = this.today.getDay();
+        this.date = new Date(2019, 1, 8);
 
-        this.daysInMonths = this.getDaysInMonths();
-        this.daysInMonth = this.daysInMonths[this.month];
-
-        this.days = [];
-        for (let i = 1; i <= this.daysInMonth; i++) {
-            const date = new Date(this.year, this.month, i);
-            const day = date.getDay();
-            this.days.push({
-                index: i,
-                text: `${i}`,
-                day: day,
-                isHoliday: day === 6 || day === 0,
-                isToday: this.isToday(date)
-            });
-        }
+        this.choosedDate = {
+            year: this.today.getFullYear(),
+            month: this.today.getMonth(),
+            day: this.today.getDay()
+        };
 
         this.state = {
             status: "selecting",
             rangeStartEl: null,
             rangeStopEl: null,
+            year: this.choosedDate.year,
+            month: this.choosedDate.month,
+            days: this.getDays()
         };
 
-        this.container = this.html(`
+        this.el = this.html(`
             <div class="container">
                 <div class="month-year-container">
-                    <span class="month">${this.month}</span>
-                    <span class="year">${this.year}</span>
-                    <div class="controllers"></div>
+                    <span class="month">${this.choosedDate.month}</span>
+                    <span class="year">${this.choosedDate.year}</span>
+                    <div class="left-controller" data-direction="l"></div>
+                    <div class="right-controller" data-direction="r"></div>
                 </div>
                 <dav class="day-names">
                     <span class="day-name">mon</span>
@@ -98,16 +90,39 @@ class Calendar {
             </div>
         `);
 
-        this.monthEl = this.container.querySelector('.month');
-        this.yearEl = this.container.querySelector('.year');
-        this.daysEl = this.container.querySelector('.days');
+        this.choosedDate.monthEl = this.el.querySelector('.month');
+        this.choosedDate.yearEl = this.el.querySelector('.year');
+        this.daysEl = this.el.querySelector('.days');
+
+        this.leftCtrlEl = this.el.querySelector('.left-controller');
+        this.rightCtrlEl = this.el.querySelector('.right-controller');
 
         this.onDayClick = this.onDayClick.bind(this);
+        this.onCtrlClick = this.onCtrlClick.bind(this);
 
+        this.leftCtrlEl.addEventListener('click', this.onCtrlClick);
+        this.rightCtrlEl.addEventListener('click', this.onCtrlClick);
         this.daysEl.addEventListener('click', this.onDayClick);
 
         this.render();
         this.append();
+    }
+
+    getDays () {
+        const days = [];
+        const daysInMonth = this.getDaysInMonths(this.choosedDate.month);
+        for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(this.choosedDate.year, this.choosedDate.month, i);
+            const day = date.getDay();
+            days.push({
+                index: i,
+                text: `${i}`,
+                day: day,
+                isHoliday: day === 6 || day === 0,
+                isToday: this.isToday(date)
+            });
+        }
+        return days;
     }
 
     onDayClick (e) {
@@ -122,29 +137,95 @@ class Calendar {
         this.state.rangeStartEl.classList.add('in-range');
     }
 
-    render () {
-        this.monthEl.textContent = Calendar.monthNames[this.month];
-        this.yearEl.textContent = this.year;
+    render (options) {
+        // Fill Year/Month display
+        this.choosedDate.monthEl.textContent = Calendar.monthNames[this.state.month];
+        this.choosedDate.yearEl.textContent = this.state.year;
 
-        for (let day of this.days) {
-            if (!this.daysEl.children.length) {
+        // Fill days container
+        const daysContainerEl = document.createElement('div');
+        daysContainerEl.className = 'days-container';
+
+        for (let day of this.state.days) {
+            if (!daysContainerEl.children.length) {
                 const dayIndex = day.day === 0 ? 7 : day.day;
                 for (let i = 0; i < dayIndex - 1; i++) {
-                    this.daysEl.appendChild(this.html(`<div class="day inactive"></div>`));
+                    daysContainerEl.appendChild(this.html(`<div class="day inactive"></div>`));
                 }
             }
-            this.daysEl.appendChild(this.html(`
+            daysContainerEl.appendChild(this.html(`
                 <div class="day active ${day.isHoliday ? 'holiday' : ''} ${day.isToday ? 'today' : ''}" data-index="${day.index}">${day.text}</div>
             `));
+        }
+
+        if (!this.daysEl.children.length) {
+            this.daysEl.appendChild(daysContainerEl);
+        } else {
+            this.daysEl.style.zIndex = '1';
+            daysContainerEl.style.zIndex = '2';
+            daysContainerEl.style.transition = 'transform .3s ease-out';
+            daysContainerEl.style.backgroundColor = 'rgba(0, 0, 0, .2)';
+            daysContainerEl.style.transform = `translate3d(${options.direction === 'l' ? '-' : '+'}100%, 0, 0)`;
+
+            const onTransitionEnd = () => {
+                daysContainerEl.removeEventListener('transitionend', onTransitionEnd, false);
+                daysContainerEl.style.backgroundColor = '';
+                this.daysEl.removeChild(this.daysEl.firstElementChild);
+            };
+
+            daysContainerEl.addEventListener('transitionend', onTransitionEnd, false);
+
+            this.daysEl.appendChild(daysContainerEl);
+            requestAnimationFrame(() =>
+                requestAnimationFrame( () => {
+                    daysContainerEl.style.transform = 'translate3d(0, 0, 0)';
+                }));
+        }
+    }
+
+    onCtrlClick (e) {
+        const direction = e.target.dataset.direction;
+        if (direction === 'l') {
+            let newMonth = this.choosedDate.month - 1;
+            let newYear = this.choosedDate.year;
+            if (newMonth < 0) {
+                newYear--;
+                newMonth = 11;
+            }
+            this.choosedDate.month = newMonth;
+            this.choosedDate.year = newYear;
+
+            this.state = Object.assign({}, this.state,{
+                year: this.choosedDate.year,
+                month: this.choosedDate.month,
+                days: this.getDays()
+            });
+            this.render({direction});
+        } else if (direction === 'r') {
+            let newMonth = this.choosedDate.month + 1;
+            let newYear = this.choosedDate.year;
+            if (newMonth > 11) {
+                newYear++;
+                newMonth = 0;
+            }
+            this.choosedDate.month = newMonth;
+            this.choosedDate.year = newYear;
+
+            this.state = Object.assign({}, this.state,{
+                year: this.choosedDate.year,
+                month: this.choosedDate.month,
+                days: this.getDays()
+            });
+            this.render({direction});
         }
     }
 
     append (root = document.body) {
-        root.appendChild(this.container);
+        root.appendChild(this.el);
     }
 
     remove () {
-        this.container.parentElement.removeChild(this.container);
+        this.el.parentElement.removeChild(this.el);
     }
 
     /**
@@ -157,8 +238,8 @@ class Calendar {
         return wrapper.firstElementChild;
     }
 
-    getDaysInMonths () {
-        return [31, this.isLeapYear(this.year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    getDaysInMonths (month) {
+        return [31, this.isLeapYear(this.choosedDate.year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
     }
 
     /**
@@ -182,3 +263,4 @@ class Calendar {
 }
 
 const calendar = new Calendar();
+calendar.render();
