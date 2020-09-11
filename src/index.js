@@ -32,8 +32,8 @@ import './styles.css';
 
 class Calendar {
 
-    constructor () {
-        this.monthNames = [
+    static get monthNames () {
+        return [
             'January',
             'February',
             'March',
@@ -47,7 +47,9 @@ class Calendar {
             'November',
             'December',
         ];
+    }
 
+    constructor () {
         this.today = new Date();
 
         this.year = this.today.getFullYear();
@@ -76,11 +78,11 @@ class Calendar {
             rangeStopEl: null,
         };
 
-        this.container = this.createDomEl(`
+        this.container = this.html(`
             <div class="container">
                 <div class="month-year-container">
-                    <span class="month">july</span>
-                    <span class="year">2020</span>
+                    <span class="month">${this.month}</span>
+                    <span class="year">${this.year}</span>
                     <div class="controllers"></div>
                 </div>
                 <dav class="day-names">
@@ -121,31 +123,35 @@ class Calendar {
     }
 
     render () {
-        this.monthEl.textContent = this.monthNames[this.month];
+        this.monthEl.textContent = Calendar.monthNames[this.month];
         this.yearEl.textContent = this.year;
 
         for (let day of this.days) {
             if (!this.daysEl.children.length) {
                 const dayIndex = day.day === 0 ? 7 : day.day;
                 for (let i = 0; i < dayIndex - 1; i++) {
-                    this.daysEl.appendChild(this.createDomEl(`<div class="day inactive"></div>`));
+                    this.daysEl.appendChild(this.html(`<div class="day inactive"></div>`));
                 }
             }
-            this.daysEl.appendChild(this.createDomEl(`
+            this.daysEl.appendChild(this.html(`
                 <div class="day active ${day.isHoliday ? 'holiday' : ''} ${day.isToday ? 'today' : ''}" data-index="${day.index}">${day.text}</div>
             `));
         }
     }
 
-    append () {
-        document.body.appendChild(this.container);
+    append (root = document.body) {
+        root.appendChild(this.container);
+    }
+
+    remove () {
+        this.container.parentElement.removeChild(this.container);
     }
 
     /**
      * @param {string} string
      * @return {Element}
      */
-    createDomEl (string) {
+    html (string) {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = string.trim();
         return wrapper.firstElementChild;
