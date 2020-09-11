@@ -131,6 +131,9 @@ body {
 .day.active {
   cursor: pointer; }
 
+.day.inactive {
+  opacity: 15%; }
+
 .day.holiday {
   color: #f1b2d7; }
 

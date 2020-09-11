@@ -52,28 +52,27 @@ class Calendar {
     constructor () {
         this.today = new Date();
 
-        this.date = new Date(2019, 1, 8);
+        this.date = new Date(1990, 0);
 
-        this.choosedDate = {
-            year: this.today.getFullYear(),
-            month: this.today.getMonth(),
-            day: this.today.getDay()
+        this.chosenDate = {
+            year: this.date.getFullYear(),
+            month: this.date.getMonth(),
+            day: this.date.getDay()
         };
-
         this.state = {
             status: "selecting",
             rangeStartEl: null,
             rangeStopEl: null,
-            year: this.choosedDate.year,
-            month: this.choosedDate.month,
+            year: this.chosenDate.year,
+            month: this.chosenDate.month,
             days: this.getDays()
         };
 
         this.el = this.html(`
             <div class="container">
                 <div class="month-year-container">
-                    <span class="month">${this.choosedDate.month}</span>
-                    <span class="year">${this.choosedDate.year}</span>
+                    <span class="month">${this.chosenDate.month}</span>
+                    <span class="year">${this.chosenDate.year}</span>
                     <div class="left-controller" data-direction="l"></div>
                     <div class="right-controller" data-direction="r"></div>
                 </div>
@@ -90,8 +89,8 @@ class Calendar {
             </div>
         `);
 
-        this.choosedDate.monthEl = this.el.querySelector('.month');
-        this.choosedDate.yearEl = this.el.querySelector('.year');
+        this.chosenDate.monthEl = this.el.querySelector('.month');
+        this.chosenDate.yearEl = this.el.querySelector('.year');
         this.daysEl = this.el.querySelector('.days');
 
         this.leftCtrlEl = this.el.querySelector('.left-controller');
@@ -110,9 +109,9 @@ class Calendar {
 
     getDays () {
         const days = [];
-        const daysInMonth = this.getDaysInMonths(this.choosedDate.month);
+        const daysInMonth = this.getDaysInMonths(this.chosenDate.month);
         for (let i = 1; i <= daysInMonth; i++) {
-            const date = new Date(this.choosedDate.year, this.choosedDate.month, i);
+            const date = new Date(this.chosenDate.year, this.chosenDate.month, i);
             const day = date.getDay();
             days.push({
                 index: i,
@@ -139,18 +138,29 @@ class Calendar {
 
     render (options) {
         // Fill Year/Month display
-        this.choosedDate.monthEl.textContent = Calendar.monthNames[this.state.month];
-        this.choosedDate.yearEl.textContent = this.state.year;
+        this.chosenDate.monthEl.textContent = Calendar.monthNames[this.state.month];
+        this.chosenDate.yearEl.textContent = this.state.year.toString();
 
         // Fill days container
         const daysContainerEl = document.createElement('div');
         daysContainerEl.className = 'days-container';
 
         for (let day of this.state.days) {
+            // Days from previous month
             if (!daysContainerEl.children.length) {
                 const dayIndex = day.day === 0 ? 7 : day.day;
-                for (let i = 0; i < dayIndex - 1; i++) {
-                    daysContainerEl.appendChild(this.html(`<div class="day inactive"></div>`));
+
+                const prevMonthDays = [];
+                const monthIndex = this.state.month === 0 ? 11 : this.state.month - 1;
+                let daysCount = this.getDaysInMonths(monthIndex);
+                const needAllDays = dayIndex - 1;
+                for (let i = 0; i < needAllDays; i++) {
+                    prevMonthDays.push(daysCount--);
+                }
+                prevMonthDays.reverse();
+
+                for (let day of prevMonthDays) {
+                    daysContainerEl.appendChild(this.html(`<div class="day inactive">${day}</div>`));
                 }
             }
             daysContainerEl.appendChild(this.html(`
@@ -158,13 +168,29 @@ class Calendar {
             `));
         }
 
+        // Days from successor month
+        const lastDay = this.state.days[this.state.days.length - 1];
+        const dayIndex = lastDay.day === 0 ? 7 : lastDay.day;
+
+        const nextMonthDays = [];
+        const needAllDays = 7 - dayIndex;
+        for (let i = 0; i < needAllDays; i++) {
+            nextMonthDays.push(i + 1);
+        }
+
+        for (let day of nextMonthDays) {
+            daysContainerEl.appendChild(this.html(`<div class="day inactive">${day}</div>`));
+        }
+
         if (!this.daysEl.children.length) {
             this.daysEl.appendChild(daysContainerEl);
         } else {
             this.daysEl.style.zIndex = '1';
             daysContainerEl.style.zIndex = '2';
-            daysContainerEl.style.transition = 'transform .3s ease-out';
+
             daysContainerEl.style.backgroundColor = 'rgba(0, 0, 0, .2)';
+
+            daysContainerEl.style.transition = 'transform .3s ease-out';
             daysContainerEl.style.transform = `translate3d(${options.direction === 'l' ? '-' : '+'}100%, 0, 0)`;
 
             const onTransitionEnd = () => {
@@ -185,39 +211,32 @@ class Calendar {
 
     onCtrlClick (e) {
         const direction = e.target.dataset.direction;
+        let newYear = this.chosenDate.year;
+        let newMonth;
         if (direction === 'l') {
-            let newMonth = this.choosedDate.month - 1;
-            let newYear = this.choosedDate.year;
+            newMonth = this.chosenDate.month - 1;
             if (newMonth < 0) {
                 newYear--;
                 newMonth = 11;
             }
-            this.choosedDate.month = newMonth;
-            this.choosedDate.year = newYear;
-
-            this.state = Object.assign({}, this.state,{
-                year: this.choosedDate.year,
-                month: this.choosedDate.month,
-                days: this.getDays()
-            });
-            this.render({direction});
         } else if (direction === 'r') {
-            let newMonth = this.choosedDate.month + 1;
-            let newYear = this.choosedDate.year;
+            newMonth = this.chosenDate.month + 1;
             if (newMonth > 11) {
                 newYear++;
                 newMonth = 0;
             }
-            this.choosedDate.month = newMonth;
-            this.choosedDate.year = newYear;
-
-            this.state = Object.assign({}, this.state,{
-                year: this.choosedDate.year,
-                month: this.choosedDate.month,
-                days: this.getDays()
-            });
-            this.render({direction});
         }
+
+        this.chosenDate.month = newMonth;
+        this.chosenDate.year = newYear;
+
+        this.state = Object.assign({}, this.state,{
+            year: this.chosenDate.year,
+            month: this.chosenDate.month,
+            days: this.getDays()
+        });
+
+        this.render({direction: direction});
     }
 
     append (root = document.body) {
@@ -239,7 +258,7 @@ class Calendar {
     }
 
     getDaysInMonths (month) {
-        return [31, this.isLeapYear(this.choosedDate.year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
+        return [31, this.isLeapYear(this.chosenDate.year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
     }
 
     /**
