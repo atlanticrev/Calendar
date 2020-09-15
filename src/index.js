@@ -52,13 +52,14 @@ class Calendar {
     constructor () {
         this.today = new Date();
 
-        this.date = new Date(1990, 0);
+        this.date = this.today;
 
         this.chosenDate = {
             year: this.date.getFullYear(),
             month: this.date.getMonth(),
             day: this.date.getDay()
         };
+
         this.state = {
             status: "selecting",
             rangeStartEl: null,
@@ -91,6 +92,7 @@ class Calendar {
 
         this.chosenDate.monthEl = this.el.querySelector('.month');
         this.chosenDate.yearEl = this.el.querySelector('.year');
+
         this.daysEl = this.el.querySelector('.days');
 
         this.leftCtrlEl = this.el.querySelector('.left-controller');
@@ -136,59 +138,68 @@ class Calendar {
         this.state.rangeStartEl.classList.add('in-range');
     }
 
+    getDaysFromPrevMonth () {
+        const firstDayIndex = this.state.days[0].day === 0 ? 7 : this.state.days[0].day;
+        const days = [];
+        const monthIndex = this.state.month === 0 ? 11 : this.state.month - 1;
+        let lastDayIndex = this.getDaysInMonths(monthIndex);
+        const needDays = firstDayIndex - 1;
+        for (let i = 0; i < needDays; i++) {
+            days.push(lastDayIndex--);
+        }
+        days.reverse();
+        return days;
+    }
+
+    getDaysFromSucMonth () {
+        const lastDay = this.state.days[this.state.days.length - 1];
+        const dayIndex = lastDay.day === 0 ? 7 : lastDay.day;
+        const days = [];
+        const needDays = (7 - dayIndex) + 7;
+        for (let i = 0; i < needDays; i++) {
+            days.push(i + 1);
+        }
+        return days;
+    }
+
     render (options) {
         // Fill Year/Month display
         this.chosenDate.monthEl.textContent = Calendar.monthNames[this.state.month];
         this.chosenDate.yearEl.textContent = this.state.year.toString();
 
-        // Fill days container
+        // Create days container
         const daysContainerEl = document.createElement('div');
         daysContainerEl.className = 'days-container';
 
+        // Fill days container
+        const daysFromPrevMonth = this.getDaysFromPrevMonth();
+        const daysFromSucMonth = this.getDaysFromSucMonth();
+        // Add days from previous month
+        for (let day of daysFromPrevMonth) {
+            daysContainerEl.appendChild(this.html(`<div class="day inactive">${day}</div>`));
+        }
+        // Add days from current month
         for (let day of this.state.days) {
-            // Days from previous month
-            if (!daysContainerEl.children.length) {
-                const dayIndex = day.day === 0 ? 7 : day.day;
-
-                const prevMonthDays = [];
-                const monthIndex = this.state.month === 0 ? 11 : this.state.month - 1;
-                let daysCount = this.getDaysInMonths(monthIndex);
-                const needAllDays = dayIndex - 1;
-                for (let i = 0; i < needAllDays; i++) {
-                    prevMonthDays.push(daysCount--);
-                }
-                prevMonthDays.reverse();
-
-                for (let day of prevMonthDays) {
-                    daysContainerEl.appendChild(this.html(`<div class="day inactive">${day}</div>`));
-                }
-            }
             daysContainerEl.appendChild(this.html(`
                 <div class="day active ${day.isHoliday ? 'holiday' : ''} ${day.isToday ? 'today' : ''}" data-index="${day.index}">${day.text}</div>
             `));
         }
-
-        // Days from successor month
-        const lastDay = this.state.days[this.state.days.length - 1];
-        const dayIndex = lastDay.day === 0 ? 7 : lastDay.day;
-
-        const nextMonthDays = [];
-        const needAllDays = 7 - dayIndex;
-        for (let i = 0; i < needAllDays; i++) {
-            nextMonthDays.push(i + 1);
-        }
-
-        for (let day of nextMonthDays) {
+        // Add days from successor month
+        for (let day of daysFromSucMonth) {
             daysContainerEl.appendChild(this.html(`<div class="day inactive">${day}</div>`));
         }
 
+        // Add days container to the DOM
+        // If there are no containers
         if (!this.daysEl.children.length) {
             this.daysEl.appendChild(daysContainerEl);
+            // Change containers (animation)
         } else {
             this.daysEl.style.zIndex = '1';
             daysContainerEl.style.zIndex = '2';
 
-            daysContainerEl.style.backgroundColor = 'rgba(0, 0, 0, .2)';
+            daysContainerEl.style.backgroundColor = '#795da7';
+            daysContainerEl.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)';
 
             daysContainerEl.style.transition = 'transform .3s ease-out';
             daysContainerEl.style.transform = `translate3d(${options.direction === 'l' ? '-' : '+'}100%, 0, 0)`;
@@ -196,9 +207,9 @@ class Calendar {
             const onTransitionEnd = () => {
                 daysContainerEl.removeEventListener('transitionend', onTransitionEnd, false);
                 daysContainerEl.style.backgroundColor = '';
+                daysContainerEl.style.boxShadow = '';
                 this.daysEl.removeChild(this.daysEl.firstElementChild);
             };
-
             daysContainerEl.addEventListener('transitionend', onTransitionEnd, false);
 
             this.daysEl.appendChild(daysContainerEl);
