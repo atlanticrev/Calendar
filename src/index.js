@@ -1,4 +1,7 @@
+import './scss/index.scss';
 import './styles.css';
+
+import { i18n } from '../locale';
 
 // `
 // January – Jan.
@@ -74,23 +77,23 @@ class Calendar {
         };
 
         this.el = this.html(`
-            <div class="container">
-                <div class="month-year-container">
+            <div class="calendar">
+                <div class="date-container">
                     <span class="month">${this.chosenDate.month}</span>
                     <span class="year">${this.chosenDate.year}</span>
                     <div class="left-controller" data-direction="l"></div>
                     <div class="right-controller" data-direction="r"></div>
                 </div>
-                <dav class="day-names">
-                    <span class="day-name">mon</span>
-                    <span class="day-name">tue</span>
-                    <span class="day-name">wed</span>
-                    <span class="day-name">thu</span>
-                    <span class="day-name">fri</span>
-                    <span class="day-name">sun</span>
-                    <span class="day-name">sat</span>
+                <dav class="days-names">
+                    <span class="day-name">${i18n('month.mon')}</span>
+                    <span class="day-name">${i18n('month.tue')}</span>
+                    <span class="day-name">${i18n('month.wed')}</span>
+                    <span class="day-name">${i18n('month.thu')}</span>
+                    <span class="day-name">${i18n('month.fri')}</span>
+                    <span class="day-name">${i18n('month.sun')}</span>
+                    <span class="day-name">${i18n('month.sat')}</span>
                 </dav>
-                <div class="days">
+                <div class="days-viewport">
                     <div class="days-scroll-wrapper"></div>
                 </div>
             </div>
@@ -99,7 +102,7 @@ class Calendar {
         this.chosenDate.monthEl = this.el.querySelector('.month');
         this.chosenDate.yearEl = this.el.querySelector('.year');
 
-        this.daysScrollWrapperEl = this.el.querySelector('.days > .days-scroll-wrapper');
+        this.daysScrollWrapperEl = this.el.querySelector('.days-scroll-wrapper');
 
         this.leftCtrlEl = this.el.querySelector('.left-controller');
         this.rightCtrlEl = this.el.querySelector('.right-controller');

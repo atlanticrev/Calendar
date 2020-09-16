@@ -20,38 +20,6 @@ body {
   align-items: center;
   background: radial-gradient(circle at center, #f1b2d7, #3a318c); }
 
-.container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 450px;
-  background: linear-gradient(#3a318c, #795da7);
-  border-radius: 20px;
-  overflow: hidden;
-  padding: 20px 40px; }
-
-@media screen and (max-width: 480px) {
-  .container {
-    width: 100%;
-    padding: 20px 15px;
-    height: 100vh;
-    border-radius: 0; } }
-
-.month-year-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  position: relative;
-  align-items: center;
-  width: 100%;
-  height: 80px;
-  text-align: center;
-  font-size: 30px;
-  text-transform: uppercase;
-  color: white;
-  font-weight: bold; }
-
 .left-controller, .right-controller {
   --size: 40px;
   display: block;
@@ -71,50 +39,6 @@ body {
 .right-controller {
   right: 0; }
 
-.year {
-  margin-left: 10px; }
-
-.day-names {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 70px;
-  text-align: center; }
-
-.day-name {
-  --size: calc(100% * 1/7);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: var(--size);
-  font-size: 15px;
-  text-transform: uppercase;
-  color: white; }
-
-.days {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: flex-start;
-  align-items: flex-start;
-  width: 100%;
-  height: 300px;
-  overflow: hidden; }
-
-.days-scroll-wrapper {
-  display: flex;
-  flex-flow: row nowrap;
-  width: 100%;
-  flex: none; }
-
-.days-container {
-  display: flex;
-  flex-flow: row wrap;
-  width: 100%;
-  flex: none; }
-
 .day {
   --size: calc(100% / 7);
   --width: var(--size);
@@ -128,34 +52,101 @@ body {
   font-size: 20px;
   text-transform: uppercase;
   color: white; }
+  @media not all and (hover: none) {
+    .day.active:hover {
+      background-color: white;
+      color: #3a318c; } }
+  .day.active {
+    cursor: pointer; }
+  .day.inactive {
+    opacity: 15%; }
+  .day.holiday {
+    color: #f1b2d7; }
+  .day.today {
+    border: 1px dashed #f1b2d7; }
+  .day.in-range {
+    background-color: rgba(0, 0, 0, 0.4); }
+  .day.range-end {
+    border-bottom-right-radius: 50%;
+    border-top-right-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.4); }
+  .day.range-start {
+    border-bottom-left-radius: 50%;
+    border-top-left-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.4); }
 
-@media not all and (hover: none) {
-  .day.active:hover {
-    background-color: white;
-    color: #3a318c; } }
+.calendar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 450px;
+  background: linear-gradient(#3a318c, #795da7);
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 20px 40px; }
 
-.day.active {
-  cursor: pointer; }
+@media screen and (max-width: 480px) {
+  .calendar {
+    width: 100%;
+    padding: 20px 15px;
+    height: 100vh;
+    border-radius: 0; } }
 
-.day.inactive {
-  opacity: 15%; }
+.date-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  position: relative;
+  align-items: center;
+  width: 100%;
+  padding: 30px 0;
+  text-align: center;
+  font-size: 28px;
+  text-transform: uppercase;
+  color: white;
+  /*font-weight: bold;*/ }
 
-.day.holiday {
-  color: #f1b2d7; }
+.year {
+  margin-left: 10px; }
 
-.day.today {
-  border: 1px dashed #f1b2d7; }
+.days-names {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px 0;
+  text-align: center; }
 
-.day.in-range {
-  background-color: rgba(0, 0, 0, 0.4); }
+.day-name {
+  --size: calc(100% * 1/7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: var(--size);
+  font-size: 15px;
+  text-transform: uppercase;
+  color: white; }
 
-.day.range-end {
-  border-bottom-right-radius: 50%;
-  border-top-right-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.4); }
+.days-viewport {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  width: 100%;
+  overflow: hidden; }
 
-.day.range-start {
-  border-bottom-left-radius: 50%;
-  border-top-left-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.4); }
+.days-scroll-wrapper {
+  display: flex;
+  flex-flow: row nowrap;
+  width: 100%;
+  flex: none; }
+
+.days-container {
+  display: flex;
+  flex-flow: row wrap;
+  width: 100%;
+  flex: none; }
 
