@@ -116,19 +116,23 @@ body {
     flex-flow: row nowrap;
     justify-content: flex-start;
     align-items: flex-start;
-    position: relative;
     width: 100%;
     height: 300px;
     overflow: hidden;
+}
+
+.days-scroll-wrapper {
+    display: flex;
+    flex-flow: row nowrap;
+    width: 100%;
+    flex: none;
 }
 
 .days-container {
     display: flex;
     flex-flow: row wrap;
     width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
+    flex: none;
 }
 
 .day {
