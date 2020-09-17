@@ -26,7 +26,57 @@ const locale = {
     "month.sat": {
         en: "sat",
         ru: "вс"
-    }
+    },
+    "month.names": [
+        {
+            en: "January",
+            ru: "январь"
+        },
+        {
+            en: "February",
+            ru: "февраль"
+        },
+        {
+            en: "March",
+            ru: "март"
+        },
+        {
+            en: "April",
+            ru: "апрель"
+        },
+        {
+            en: "May",
+            ru: "май"
+        },
+        {
+            en: "June",
+            ru: "июнь"
+        },
+        {
+            en: "July",
+            ru: "июль"
+        },
+        {
+            en: "August",
+            ru: "август"
+        },
+        {
+            en: "September",
+            ru: "сентябрь"
+        },
+        {
+            en: "October",
+            ru: "октябрь"
+        },
+        {
+            en: "November",
+            ru: "ноябрь"
+        },
+        {
+            en: "December",
+            ru: "декабрь"
+        }
+    ]
 };
 
 export function i18n(string) {
