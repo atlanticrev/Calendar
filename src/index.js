@@ -168,28 +168,6 @@ class Calendar extends Component {
         return days;
     }
 
-    // getDaysFromPrevMonth () {
-    //     const firstDayIndex = this.state.days[0].day === 0 ? 7 : this.state.days[0].day;
-    //     const days = [];
-    //     const monthIndex = this.state.month === 0 ? 11 : this.state.month - 1;
-    //     let lastDayIndex = this._getDaysInMonth(monthIndex);
-    //     const needDays = firstDayIndex - 1;
-    //     for (let i = 0; i < needDays; i++) {
-    //         days.push(lastDayIndex--);
-    //     }
-    //     days.reverse();
-    //     return days;
-    // }
-
-    // getDaysFromSucMonth (daysFromPrevMonth) {
-    //     const days = [];
-    //     const needDays = Calendar.cellsCount - daysFromPrevMonth.length - this.state.days.length;
-    //     for (let i = 0; i < needDays; i++) {
-    //         days.push(i + 1);
-    //     }
-    //     return days;
-    // }
-
     onDayClick (e) {
         let dayEl;
         for (let el of e.composedPath()) {
@@ -233,6 +211,8 @@ class Calendar extends Component {
         } else {
             const prevContainer = this.daysScrollWrapperEl.firstElementChild;
 
+            const transitionTime = 0.1;
+
             const onTransitionEnd = () => {
                 this.daysScrollWrapperEl.removeEventListener('transitionend', onTransitionEnd, false);
                 this.daysScrollWrapperEl.removeChild(prevContainer);
@@ -252,7 +232,7 @@ class Calendar extends Component {
 
             requestAnimationFrame(() =>
                 requestAnimationFrame( () => {
-                    this.daysScrollWrapperEl.style.transition = 'transform .3s ease-out';
+                    this.daysScrollWrapperEl.style.transition = `transform ${transitionTime}s ease-out`;
                     if (options.direction === 'l') {
                         this.daysScrollWrapperEl.style.transform = `translate3d(0, 0, 0)`;
                     } else if (options.direction === 'r') {
