@@ -211,7 +211,7 @@ class Calendar extends Component {
         } else {
             const prevContainer = this.daysScrollWrapperEl.firstElementChild;
 
-            const transitionTime = 0.1;
+            const transitionTime = 0.2;
 
             const onTransitionEnd = () => {
                 this.daysScrollWrapperEl.removeEventListener('transitionend', onTransitionEnd, false);
