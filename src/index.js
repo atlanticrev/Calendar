@@ -30,30 +30,30 @@ class Calendar extends Component {
     constructor (options) {
         super();
 
+        /**
+         * Model
+         */
         this.today = new Date();
 
-        this.date = null;
-        if (options && options.date) {
-            this.date = new Date(options.date);
-        } else {
-            this.date = this.today;
-        }
+        this.dateOrigin = (options && options.date)
+            ? new Date(options.date)
+            : this.today;
 
-        this.state = {
-            status: "selecting",
-            year: this.date.getFullYear(),
-            month: this.date.getMonth(),
-            day: this.date.getDay(),
-            rangeStartEl: null,
-            rangeStopEl: null
-        };
-        this.state.days = this.getDays();
+        this.month = this.dateOrigin.getMonth();
+        this.year = this.dateOrigin.getFullYear();
+        this.days = this.getDays();
 
+        /**
+         * View
+         */
+        this.isAnimating = false;
+
+        // Template
         this.el = this.html(`
             <div class="calendar">
                 <div class="date-container">
-                    <span class="month">${this.state.month}</span>
-                    <span class="year">${this.state.year}</span>
+                    <span class="month">${this.month}</span>
+                    <span class="year">${this.year}</span>
                     <div class="left-controller" data-direction="l"></div>
                     <div class="right-controller" data-direction="r"></div>
                 </div>
@@ -63,8 +63,8 @@ class Calendar extends Component {
                     <span class="day-name">${i18n('month.wed')}</span>
                     <span class="day-name">${i18n('month.thu')}</span>
                     <span class="day-name">${i18n('month.fri')}</span>
-                    <span class="day-name">${i18n('month.sun')}</span>
                     <span class="day-name">${i18n('month.sat')}</span>
+                    <span class="day-name">${i18n('month.sun')}</span>
                 </dav>
                 <div class="days-viewport">
                     <div class="days-scroll-wrapper"></div>
@@ -72,12 +72,14 @@ class Calendar extends Component {
             </div>
         `);
 
+        // Elements
         this.monthEl = this.el.querySelector('.month');
         this.yearEl = this.el.querySelector('.year');
-        this.daysScrollWrapperEl = this.el.querySelector('.days-scroll-wrapper');
         this.leftCtrlEl = this.el.querySelector('.left-controller');
         this.rightCtrlEl = this.el.querySelector('.right-controller');
+        this.daysScrollWrapperEl = this.el.querySelector('.days-scroll-wrapper');
 
+        // Listeners
         this.onDayClick = this.onDayClick.bind(this);
         this.onCtrlClick = this.onCtrlClick.bind(this);
 
@@ -85,87 +87,17 @@ class Calendar extends Component {
         this.rightCtrlEl.addEventListener('click', this.onCtrlClick);
         this.daysScrollWrapperEl.addEventListener('click', this.onDayClick);
 
+        // Initial rendering
         this.render();
-        this.append();
+        this.mount();
     }
 
-    // @todo Упростить
     getDays () {
-        const days = [];
-
-        // Days of current month
-        const daysInMonth = this._getDaysInMonth(this.state.month);
-        for (let i = 1; i <= daysInMonth; i++) {
-            const date = new Date(this.state.year, this.state.month, i);
-            const day = date.getDay();
-            days.push({
-                text: `${i}`,
-                day: day,
-                date: i,
-                month: date.getMonth(),
-                year: date.getFullYear(),
-                isHoliday: day === 6 || day === 0,
-                isToday: this._isToday(date)
-            });
-        }
-
-        // Days of prev month
-        let prevMonth;
-        let prevMonthYear;
-        if (this.state.month === 0) {
-            prevMonth = 11;
-            prevMonthYear = this.state.year - 1;
-        } else {
-            prevMonth = this.state.month - 1;
-            prevMonthYear = this.state.year;
-        }
-        let prevMonthDay = this._getDaysInMonth(prevMonth);
-
-        const firstDay = days[0].day === 0 ? 7 : days[0].day;
-        let needDays = firstDay - 1;
-
-        for (let i = 0; i < needDays; i++) {
-            const date = new Date(prevMonthYear, prevMonth, prevMonthDay);
-            const day = date.getDay();
-            days.unshift({
-                text: `${prevMonthDay}`,
-                day: day,
-                date: prevMonthDay,
-                month: date.getMonth(),
-                year: date.getFullYear(),
-                isHoliday: day === 6 || day === 0,
-                isToday: this._isToday(date)
-            });
-            prevMonthDay--;
-        }
-
-        // Days of succ month
-        let succMonth;
-        let succMonthYear;
-        if (this.state.month === 11) {
-            succMonth = 0;
-            succMonthYear = this.state.year + 1;
-        } else {
-            succMonth = this.state.month + 1;
-            succMonthYear = this.state.year;
-        }
-        needDays = Calendar.cellsCount - days.length;
-
-        for (let i = 1; i <= needDays; i++) {
-            const date = new Date(succMonthYear, succMonth, i);
-            const day = date.getDay();
-            days.push({
-                text: `${i}`,
-                day: day,
-                date: i,
-                month: date.getMonth(),
-                year: date.getFullYear(),
-                isHoliday: day === 6 || day === 0,
-                isToday: this._isToday(date)
-            });
-        }
-
-        return days;
+        return [
+            ...this._getPrevMonthDays(),
+            ...this._getCurrMonthDays(),
+            ...this._getNextMonthDays()
+        ];
     }
 
     onDayClick (e) {
@@ -175,47 +107,50 @@ class Calendar extends Component {
                 dayEl = el;
             }
         }
+
         if (dayEl.classList.contains('inactive')) {
             return;
         }
-        this.state.rangeStartEl && this.state.rangeStartEl.classList.remove('in-range');
-        this.state.rangeStartEl = dayEl;
-        this.state.rangeStartEl.classList.add('in-range');
 
-        const date = this.state.days[dayEl.dataset.index];
+        const date = this.days[dayEl.dataset.index];
         console.warn(new Date(date.year, date.month, date.date));
     }
 
     render (options) {
         super.render();
+
         // Fill Year/Month display
-        this.monthEl.textContent = Calendar.monthNames[this.state.month];
-        this.yearEl.textContent = this.state.year.toString();
+        this.monthEl.textContent = Calendar.monthNames[this.month];
+        this.yearEl.textContent = this.year.toString();
 
         // Create days container
-        const daysContainerEl = document.createElement('div');
-        daysContainerEl.className = 'days-container';
+        const newDaysContainerEl = document.createElement('div');
+        newDaysContainerEl.className = 'days-container';
 
         // Fill days container
-        this.state.days.forEach((day, i) => {
-            daysContainerEl.appendChild(this.html(`
-                <div class="day ${day.month === this.state.month ? 'active' : 'inactive'} ${day.isHoliday ? 'holiday' : ''} ${day.isToday ? 'today' : ''}" data-index="${i}">${day.text}</div>
-            `));
-        });
+        for (let i = 0; i < this.days.length; i++) {
+            const day = this.days[i];
+            const dayEl = document.createElement('div');
+            dayEl.classList.add('day');
+            dayEl.classList.add(day.month === this.month ? 'active' : 'inactive');
+            day.isHoliday && dayEl.classList.add('holiday');
+            day.isToday && dayEl.classList.add('today');
+            dayEl.dataset.index = i.toString();
+            dayEl.textContent = day.date.toString();
+            newDaysContainerEl.appendChild(dayEl);
+        }
 
         // Add days container to the DOM
-        // If there are no containers
+        // If there are no containers, add first
         if (!this.daysScrollWrapperEl.children.length) {
-            this.daysScrollWrapperEl.appendChild(daysContainerEl);
-            // Change containers (animation)
+            this.daysScrollWrapperEl.appendChild(newDaysContainerEl);
+        // Change containers (animation)
         } else {
-            const prevContainer = this.daysScrollWrapperEl.firstElementChild;
-
-            const transitionTime = 0.2;
+            const currDaysContainerEl = this.daysScrollWrapperEl.firstElementChild;
 
             const onTransitionEnd = () => {
                 this.daysScrollWrapperEl.removeEventListener('transitionend', onTransitionEnd, false);
-                this.daysScrollWrapperEl.removeChild(prevContainer);
+                this.daysScrollWrapperEl.removeChild(currDaysContainerEl);
                 this.daysScrollWrapperEl.style.transition = '';
                 this.daysScrollWrapperEl.style.transform = 'translate3d(0, 0, 0)';
                 delete this.isAnimating;
@@ -223,22 +158,23 @@ class Calendar extends Component {
             this.daysScrollWrapperEl.addEventListener('transitionend', onTransitionEnd, false);
 
             if (options.direction === 'l') {
-                this.daysScrollWrapperEl.insertBefore(daysContainerEl, prevContainer);
+                this.daysScrollWrapperEl.insertBefore(newDaysContainerEl, currDaysContainerEl);
                 this.daysScrollWrapperEl.style.transform = 'translate3d(-100%, 0, 0)';
             } else if (options.direction === 'r') {
                 this.daysScrollWrapperEl.style.transform = 'translate3d(0, 0, 0)';
-                this.daysScrollWrapperEl.appendChild(daysContainerEl);
+                this.daysScrollWrapperEl.appendChild(newDaysContainerEl);
             }
 
             requestAnimationFrame(() =>
                 requestAnimationFrame( () => {
-                    this.daysScrollWrapperEl.style.transition = `transform ${transitionTime}s ease-out`;
+                    this.daysScrollWrapperEl.style.transition = `transform ${Calendar.CHANGE_MONTH_ANIMATION_TIME}s ease-out`;
                     if (options.direction === 'l') {
                         this.daysScrollWrapperEl.style.transform = `translate3d(0, 0, 0)`;
                     } else if (options.direction === 'r') {
                         this.daysScrollWrapperEl.style.transform = `translate3d(-100%, 0, 0)`;
                     }
-                }));
+                })
+            );
         }
     }
 
@@ -251,35 +187,138 @@ class Calendar extends Component {
 
         const direction = e.target.dataset.direction;
 
-        let newYear = this.state.year;
-        let newMonth = this.state.month;
         if (direction === 'l') {
-            if (newMonth === 0) {
-                newMonth = 11;
-                newYear--;
+            // Jan -> Dec
+            if (this.month === 0) {
+                this.month = 11;
+                this.year--;
             } else {
-                newMonth = this.state.month - 1;
+                this.month--;
             }
         } else if (direction === 'r') {
-            if (newMonth === 11) {
-                newMonth = 0;
-                newYear++;
+            // Dec -> Jan
+            if (this.month === 11) {
+                this.month = 0;
+                this.year++;
             } else {
-                newMonth = this.state.month + 1;
+                this.month++;
             }
         }
 
-        this.updateState({year: newYear, month: newMonth});
-        this.render({direction: direction});
+        this.days = this.getDays();
+        this.render({direction});
     }
 
-    updateState (newState) {
-        this.state = Object.assign({}, this.state, newState);
-        this.state.days = this.getDays();
+    /**
+     * @returns {Array<Day>}
+     * @private
+     */
+    _getPrevMonthDays () {
+        const days = [];
+
+        const prevMonth = this.month === 0
+            ? 11
+            : this.month - 1;
+
+        const prevMonthYear = this.month === 0
+            ? this.year - 1
+            : this.year;
+
+        // Days in previous month
+        let prevMonthDays = this._getDaysInMonth(prevMonth);
+
+        const currMonthFirstDay = new Date(this.year, this.month, 1).getDay();
+        // (SUN: 6, SAT: 0, MON: 1, ...)
+        let needDays = currMonthFirstDay === 0 ? 6 : currMonthFirstDay - 1;
+
+        let prevMonthDay = prevMonthDays - needDays + 1;
+        for (let i = 0; i < needDays; i++) {
+            const date = new Date(prevMonthYear, prevMonth, prevMonthDay);
+            const day = date.getDay();
+            days.push( /** @type Day */ {
+                date: prevMonthDay,
+                month: date.getMonth(),
+                year: date.getFullYear(),
+                day,
+                isHoliday: day === 6 || day === 0,
+                isToday: this._isToday(date)
+            });
+            prevMonthDay++;
+        }
+
+        return days;
     }
 
-    _getDaysInMonth (month) {
-        return [31, this._isLeapYear(this.state.year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
+    /**
+     * @returns {Array<Day>}
+     * @private
+     */
+    _getCurrMonthDays () {
+        const days = [];
+
+        const currMonthDays = this._getDaysInMonth(this.month);
+
+        // for ex. from 1 to 30
+        for (let i = 1; i <= currMonthDays; i++) {
+            const date = new Date(this.year, this.month, i);
+            const day = date.getDay();
+            days.push( /** @type Day */ {
+                date: i, // day number
+                month: date.getMonth(),
+                year: date.getFullYear(),
+                day,
+                isHoliday: day === 6 || day === 0,
+                isToday: this._isToday(date)
+            });
+        }
+
+        return days;
+    }
+
+    /**
+     * @returns {Array<Day>}
+     * @private
+     */
+    _getNextMonthDays () {
+        const days = [];
+
+        const nextMonth = this.month === 11
+            ? 0
+            : this.month + 1;
+
+        const nextMonthYear = this.month === 11
+            ? this.year + 1
+            : this.year;
+
+        const currMonthFirstDay = new Date(this.year, this.month, 1).getDay();
+        // (SUN: 6, SAT: 0, MON: 1, ...)
+        const prevMonthDaysCount = currMonthFirstDay === 0 ? 6 : currMonthFirstDay - 1;
+        const currMonthDaysCount = this._getDaysInMonth(this.month);
+        const needDays = Calendar.cellsCount - prevMonthDaysCount - currMonthDaysCount;
+
+        for (let i = 1; i <= needDays; i++) {
+            const date = new Date(nextMonthYear, nextMonth, i);
+            const day = date.getDay();
+            days.push( /** @type Day */ {
+                date: i,
+                month: date.getMonth(),
+                year: date.getFullYear(),
+                day,
+                isHoliday: day === 6 || day === 0,
+                isToday: this._isToday(date)
+            });
+        }
+
+        return days;
+    }
+
+    /**
+     * @param {number} monthIndex
+     * @returns {number}
+     * @private
+     */
+    _getDaysInMonth (monthIndex) {
+        return [31, this._isLeapYear(this.year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][monthIndex];
     }
 
     /**
@@ -287,7 +326,7 @@ class Calendar extends Component {
      * @returns {boolean}
      */
     _isLeapYear (year) {
-        return !(year % 4 !== 0 || year % 100 === 0 && year % 400 !== 0)
+        return !(year % 4 !== 0 || year % 100 === 0 && year % 400 !== 0);
     }
 
     /**
@@ -295,12 +334,23 @@ class Calendar extends Component {
      * @return {boolean}
      */
     _isToday (date) {
-        return !!(this.today.getFullYear() === date.getFullYear()
-            && this.today.getMonth() === date.getMonth()
-            && this.today.getDate() === date.getDate());
+        return this._cmpDates(this.today, date);
+    }
+
+    /**
+     * @param {Date} one
+     * @param {Date} another
+     * @return {boolean}
+     */
+    _cmpDates (one, another) {
+        return !!(one.getFullYear() === another.getFullYear()
+            && one.getMonth() === another.getMonth()
+            && one.getDate() === another.getDate());
     }
 
 }
 
-const calendar = new Calendar();
-// const calendar = new Calendar({date: '1990, 3, 4'});
+Calendar.CHANGE_MONTH_ANIMATION_TIME = 0.2;
+
+// @todo debug
+window.calendar = new Calendar();

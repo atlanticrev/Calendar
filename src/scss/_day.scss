@@ -12,6 +12,7 @@
   font-size: 20px;
   text-transform: uppercase;
   color: white;
+  border-radius: 50%;
 
   @media not all and (hover: none) {
     &.active:hover {
@@ -36,19 +37,19 @@
     border: 1px dashed #f1b2d7;
   }
 
-  &.in-range {
-    background-color: rgba(0, 0, 0, .4);
-  }
-
-  &.range-end {
-    border-bottom-right-radius: 50%;
-    border-top-right-radius: 50%;
-    background-color: rgba(0, 0, 0, .4);
-  }
-
-  &.range-start {
-    border-bottom-left-radius: 50%;
-    border-top-left-radius: 50%;
-    background-color: rgba(0, 0, 0, .4);
-  }
+  //&.in-range {
+  //  background-color: rgba(0, 0, 0, .4);
+  //}
+  //
+  //&.range-end {
+  //  border-bottom-right-radius: 50%;
+  //  border-top-right-radius: 50%;
+  //  background-color: rgba(0, 0, 0, .4);
+  //}
+  //
+  //&.range-start {
+  //  border-bottom-left-radius: 50%;
+  //  border-top-left-radius: 50%;
+  //  background-color: rgba(0, 0, 0, .4);
+  //}
 }

@@ -4,7 +4,7 @@ export default class Component {
         this.el = null;
     }
 
-    append (root = document.body) {
+    mount (root = document.body) {
         root.appendChild(this.el);
     }
 
@@ -22,6 +22,9 @@ export default class Component {
         return wrapper.firstElementChild;
     }
 
+    /**
+     * @abstract
+     */
     render () {}
 
 }
