@@ -6,7 +6,7 @@
   justify-content: center;
   align-items: center;
   width: var(--calendar-size);
-  background: linear-gradient(#3a318c, #795da7);
+  background: $violet-gradient;
   border-radius: 20px;
   overflow: hidden;
   padding: 20px 40px;
@@ -30,7 +30,7 @@
     text-align: center;
     font-size: 28px;
     text-transform: uppercase;
-    color: white;
+    color: $white;
   }
 
   .year {
@@ -57,7 +57,7 @@
     width: var(--size);
     font-size: 15px;
     text-transform: uppercase;
-    color: white;
+    color: $white;
   }
 
   .days-viewport {
