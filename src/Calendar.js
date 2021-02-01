@@ -1,7 +1,6 @@
-import { i18n } from '../locale';
-import Component from "./Component";
+import BaseComponent from "./BaseComponent";
 
-export default class Calendar extends Component {
+export default class Calendar extends BaseComponent {
 
     static get monthNames () {
         return [
@@ -27,52 +26,43 @@ export default class Calendar extends Component {
     constructor (options) {
         super();
 
-        // Model ->
+        // Model section
         this.today = new Date();
 
         this.dateOrigin = (options && options.date)
             ? new Date(options.date)
             : this.today;
 
-        // @todo move it to mixin
-        this.selectedHolidays = {
-            defaults: new Set(),
-            tracking: new Set()
-        };
-
         this.month = this.dateOrigin.getMonth();
         this.year = this.dateOrigin.getFullYear();
         this.days = this.getDays();
 
-        // View ->
+        // View section
+        this.focusDayEl = null;
         this.isAnimating = false;
 
-        // Template
+        // Default template
         this.el = this.html(`
             <div class="container">
                 <div class="calendar">
                     <div class="date-container">
                         <span class="month">${this.month}</span>
                         <span class="year">${this.year}</span>
-                        <div class="left-controller" data-direction="l">\<</div>
-                        <div class="right-controller" data-direction="r">\></div>
+                        <div class="left-controller" data-direction="l"></div>
+                        <div class="right-controller" data-direction="r"></div>
                     </div>   
                     <dav class="days-names">
-                        <span class="day-name">${i18n('month.mon')}</span>
-                        <span class="day-name">${i18n('month.tue')}</span>
-                        <span class="day-name">${i18n('month.wed')}</span>
-                        <span class="day-name">${i18n('month.thu')}</span>
-                        <span class="day-name">${i18n('month.fri')}</span>
-                        <span class="day-name">${i18n('month.sat')}</span>
-                        <span class="day-name">${i18n('month.sun')}</span>
+                        <span class="day-name">mon</span>
+                        <span class="day-name">tue</span>
+                        <span class="day-name">wed</span>
+                        <span class="day-name">thu</span>
+                        <span class="day-name">fri</span>
+                        <span class="day-name">sat</span>
+                        <span class="day-name">sun</span>
                     </dav>               
                     <div class="days-viewport">
                         <div class="days-scroll-wrapper"></div>
                     </div>
-                </div>
-                <div class="buttons">
-                    <button class="btn btn-send">Send</button>
-                    <button class="btn btn-reset">Reset</button>
                 </div>
             </div>
         `);
@@ -83,55 +73,21 @@ export default class Calendar extends Component {
         this.leftCtrlEl = this.el.querySelector('.left-controller');
         this.rightCtrlEl = this.el.querySelector('.right-controller');
         this.daysScrollWrapperEl = this.el.querySelector('.days-scroll-wrapper');
-        // @todo move it to mixin
-        this.btnSend = this.el.querySelector('.btn-send');
-        this.btnReset = this.el.querySelector('.btn-reset');
 
         // Listeners
         this.onDayClick = this.onDayClick.bind(this);
         this.onCtrlClick = this.onCtrlClick.bind(this);
-        // @todo move it to mixin
-        this.onSendClick = this.onSendClick.bind(this);
-        this.onResetClick = this.onResetClick.bind(this);
 
         this.leftCtrlEl.addEventListener('click', this.onCtrlClick);
         this.rightCtrlEl.addEventListener('click', this.onCtrlClick);
         this.daysScrollWrapperEl.addEventListener('click', this.onDayClick);
-        // @todo move it to mixin
-        this.btnSend.addEventListener('click', this.onSendClick);
-        this.btnReset.addEventListener('click', this.onResetClick);
 
-        // Initial rendering
-        this.init()
-            .then((holidays) => {
-                // @todo move it to mixin
-                this.selectedHolidays.defaults = new Set([...holidays]);
-                this.selectedHolidays.tracking = new Set([...holidays]);
-                this.render();
-                this.mount();
-            });
+        this.init();
     }
 
-    /**
-     * @returns {Promise<Array<string>>}
-     */
     init () {
-        // return new Promise((resolve, reject) => {
-        //     fetch('http://test.unit.homestretch.ch/', {mode: "no-cors"})
-        //         .then(res => res.json())
-        //         .then(data => resolve(data))
-        //         .catch(err => reject(err));
-        // });
-        return new Promise((resolve) => {
-            // @todo move it to mixin
-            setTimeout(() => {
-                resolve([
-                    "2021-01-05",
-                    "2021-01-15",
-                    "2021-01-27"
-                ]);
-            }, 500);
-        });
+        this.render();
+        this.mount();
     }
 
     /**
@@ -149,68 +105,17 @@ export default class Calendar extends Component {
      * @param {MouseEvent} e
      */
     onDayClick (e) {
-        let dayEl, day;
-        for (let el of e.composedPath()) {
-            if (el.classList && el.classList.contains('day')) {
-                dayEl = el;
-                day = dayEl['link'];
-            }
-        }
-        if (dayEl.classList.contains('inactive')) {
-            return;
-        }
-
-        // @todo move it to mixin
-        const dateString = this._dateToStr(day.fullDate);
-        if (this.selectedHolidays.tracking.has(dateString)) {
-            dayEl.classList.remove('selected-holiday');
-            this.selectedHolidays.tracking.delete(dateString);
+        if (e.target.classList.contains('day')) {
+            this.focusDayEl = e.target;
         } else {
-            dayEl.classList.add('selected-holiday');
-            this.selectedHolidays.tracking.add(dateString);
+            this.focusDayEl = null;
         }
-    }
-
-    // @todo move it to mixin
-    onSendClick () {
-        this._send();
-    }
-
-    // @todo move it to mixin
-    onResetClick () {
-        this.selectedHolidays.tracking = new Set([...this.selectedHolidays.defaults]);
-        // @todo deduplicate
-        this.days.forEach(day => {
-            const dateString = this._dateToStr(day.fullDate);
-            if (this.selectedHolidays.tracking.has(dateString)) {
-                day['link'].classList.add('selected-holiday');
-            } else {
-                day['link'].classList.remove('selected-holiday');
-            }
-        });
-    }
-
-    // @todo move it to mixin
-    _send () {
-        const result = [];
-        for (let /** @type Date */ date of this.selectedHolidays.defaults) {
-            if (!this.selectedHolidays.tracking.has(date)) {
-                result.push({date, value: false});
-            }
-        }
-        for (let /** @type Date */ date of this.selectedHolidays.tracking) {
-            if (!this.selectedHolidays.defaults.has(date)) {
-                result.push({date, value: true});
-            }
-        }
-        // @todo send to network
-        console.log(result);
     }
 
     render (options) {
         super.render();
 
-        // Fill Year/Month display
+        // Fill Year/Month rows
         this.monthEl.textContent = Calendar.monthNames[this.month];
         this.yearEl.textContent = this.year.toString();
 
@@ -222,33 +127,23 @@ export default class Calendar extends Component {
         for (let i = 0; i < this.days.length; i++) {
             const day = this.days[i];
             const dayEl = document.createElement('div');
-
             // Default css classes
             dayEl.classList.add('day');
             dayEl.classList.add(day.month === this.month ? 'active' : 'inactive');
             day.isHoliday && dayEl.classList.add('holiday');
             day.isToday && dayEl.classList.add('today');
-
-            // @todo move it to mixin
-            if (this.selectedHolidays.tracking.has(this._dateToStr(day.fullDate))) {
-                dayEl.classList.add('selected-holiday');
-            } else {
-                dayEl.classList.remove('selected-holiday');
-            }
-
-            // Linking data with template
-            dayEl['link'] = day;
-            day['link'] = dayEl;
-
+            // Linking model with template
+            dayEl['model'] = day;
+            day['template'] = dayEl;
+            // Date
             dayEl.textContent = day.date.toString();
             newDaysContainerEl.appendChild(dayEl);
         }
 
-        // Add days container to the DOM
-        // If there are no containers, add first
+        // Adding days container to the DOM, If there are no containers yet, add first
         if (!this.daysScrollWrapperEl.children.length) {
             this.daysScrollWrapperEl.appendChild(newDaysContainerEl);
-            // Change containers (animation)
+        // Change containers (with animation)
         } else {
             const currDaysContainerEl = this.daysScrollWrapperEl.firstElementChild;
 
@@ -317,8 +212,8 @@ export default class Calendar extends Component {
     }
 
     /**
+     * @protected
      * @returns {Array<Day>}
-     * @private
      */
     _getPrevMonthDays () {
         const days = [];
@@ -358,8 +253,8 @@ export default class Calendar extends Component {
     }
 
     /**
+     * @protected
      * @returns {Array<Day>}
-     * @private
      */
     _getCurrMonthDays () {
         const days = [];
@@ -386,7 +281,7 @@ export default class Calendar extends Component {
 
     /**
      * @returns {Array<Day>}
-     * @private
+     * @protected
      */
     _getNextMonthDays () {
         const days = [];
@@ -423,15 +318,16 @@ export default class Calendar extends Component {
     }
 
     /**
+     * @protected
      * @param {number} monthIndex
      * @returns {number}
-     * @private
      */
     _getDaysInMonth (monthIndex) {
         return [31, this._isLeapYear(this.year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][monthIndex];
     }
 
     /**
+     * @protected
      * @param {number} year
      * @returns {boolean}
      */
@@ -440,6 +336,7 @@ export default class Calendar extends Component {
     }
 
     /**
+     * @protected
      * @param {Date} date
      * @return {boolean}
      */
@@ -448,6 +345,7 @@ export default class Calendar extends Component {
     }
 
     /**
+     * @protected
      * @param {Date} one
      * @param {Date} another
      * @return {boolean}
@@ -459,13 +357,13 @@ export default class Calendar extends Component {
     }
 
     /**
+     * @protected
      * @param {Date} dateObj
-     * @private
      */
     _dateToStr (dateObj) {
         const year = dateObj.getFullYear().toString();
-        const month = (dateObj.getMonth() + 1) < 9 ? '0' + (dateObj.getMonth() + 1) : (dateObj.getMonth() + 1).toString();
-        const date = dateObj.getDate() < 9 ? '0' + dateObj.getDate() : dateObj.getDate().toString();
+        const month = (dateObj.getMonth() + 1) <= 9 ? '0' + (dateObj.getMonth() + 1) : (dateObj.getMonth() + 1).toString();
+        const date = dateObj.getDate() <= 9 ? '0' + dateObj.getDate() : dateObj.getDate().toString();
         return `${year}-${month}-${date}`;
     }
 

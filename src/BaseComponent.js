@@ -1,6 +1,6 @@
-export default class Component {
+export default class BaseComponent {
 
-    constructor() {
+    constructor () {
         this.el = null;
     }
 
@@ -8,18 +8,18 @@ export default class Component {
         root.appendChild(this.el);
     }
 
-    remove () {
+    unmount () {
         this.el.parentElement.removeChild(this.el);
     }
 
     /**
      * @param {string} string
-     * @return {Element}
+     * @return {HTMLElement}
      */
     html (string) {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = string.trim();
-        return wrapper.firstElementChild;
+        return /** @type HTMLElement */ wrapper.firstElementChild;
     }
 
     /**

@@ -1,7 +1,7 @@
 import './scss/index.scss';
-import './styles.css';
 
-import Calendar from './Calendar';
+// import Calendar from './Calendar';
+import CalendarWithHolidays from "./CalendarWithHolidays";
 
-// @todo debug
-window.calendar = new Calendar();
+// window.calendar = new Calendar();
+window.calendar = new CalendarWithHolidays();
